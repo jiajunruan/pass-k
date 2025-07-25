@@ -10,7 +10,7 @@ from evals.metrics.utils import (
     eval_text_similarity,
     run_batchwise_evals,
     tokenwise_vocab_logprobs,
-    passsak
+    pass_k
 )
 from evals.metrics.base import unlearning_metric
 
@@ -83,17 +83,29 @@ def rouge(model, **kwargs):
     data = kwargs["data"]
     print("data:", data)
     collator = kwargs["collators"]
-    # print("collator:", collator)
+    print("collator:", collator)
     batch_size = kwargs["batch_size"]
     # print("batch_size:", batch_size)
     generation_args = kwargs["generation_args"]
     if kwargs["temperature"] is not None:
         generation_args["temperature"] = kwargs["temperature"]
+    if kwargs["top_p"] is not None:
+        generation_args["top_p"] = kwargs["top_p"]
+
+    if kwargs["output_dir"] is not None:
+        generation_args["output_dir"] = kwargs["output_dir"]
+    if kwargs["set"] is not None:
+        generation_args["set"] = kwargs["set"]
+
     print("generation_args:", generation_args)
     batch_size = 1
     dataloader = DataLoader(data, batch_size=batch_size, collate_fn=collator)
     print("dataloader:", dataloader)
-    
+    import time 
+    start_time=time.time()
+    pass_k(model, tokenizer, dataloader, generation_args)
+    end_time=time.time()
+    print("duration_time:",end_time-start_time)
     # import time
     # start_time = time.time()
     # for i in range(3):
@@ -107,30 +119,30 @@ def rouge(model, **kwargs):
     #     passsak(model, tokenizer, dataloader, generation_args)
     # end_time = time.time()
     # print("Time taken for passsak:", end_time - start_time)
-    batch_size = 32
-    dataloader = DataLoader(data, batch_size=batch_size, collate_fn=collator)
-    fun_args = {"tokenizer": tokenizer, "generation_args": generation_args}
-    # print("fun_args:", fun_args)
-    scores_by_index = run_batchwise_evals(
-        model,
-        dataloader,
-        eval_text_similarity,
-        fun_args,
-        "Calculating text similarity",
-    )
-    rouge_values = np.array(
-        [
-            evals[kwargs["rouge_type"]]
-            for evals in scores_by_index.values()
-            if evals[kwargs["rouge_type"]] is not None
-        ]
-    )
-    rouge_values = aggregate_to_1D(rouge_values)
-    # print("rouge_values:", rouge_values)
-    return {
-        "agg_value": np.mean(rouge_values),
-        "value_by_index": scores_by_index,
-    }
+    # batch_size = 32
+    # dataloader = DataLoader(data, batch_size=batch_size, collate_fn=collator)
+    # fun_args = {"tokenizer": tokenizer, "generation_args": generation_args}
+    # # print("fun_args:", fun_args)
+    # scores_by_index = run_batchwise_evals(
+    #     model,
+    #     dataloader,
+    #     eval_text_similarity,
+    #     fun_args,
+    #     "Calculating text similarity",
+    # )
+    # rouge_values = np.array(
+    #     [
+    #         evals[kwargs["rouge_type"]]
+    #         for evals in scores_by_index.values()
+    #         if evals[kwargs["rouge_type"]] is not None
+    #     ]
+    # )
+    # rouge_values = aggregate_to_1D(rouge_values)
+    # # print("rouge_values:", rouge_values)
+    # return {
+    #     "agg_value": np.mean(rouge_values),
+    #     "value_by_index": scores_by_index,
+    # }
 
 
 @unlearning_metric(name="truth_ratio")

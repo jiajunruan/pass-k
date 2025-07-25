@@ -98,7 +98,7 @@ def compute_dpo_loss(model, ref_model, win_inputs=None, lose_inputs=None, beta=1
     dpo_loss = -2 / beta * F.logsigmoid(beta * (win_log_ratio - lose_log_ratio)).mean()
     
     # Combined loss: DPO + entropy minimization for forget set
-    entropy_weight = 0.25  # Adjust this weight as needed
+    entropy_weight = 1  # Adjust this weight as needed
     total_loss = dpo_loss + entropy_weight * entropy_loss
 
     print(f"Total Loss: {total_loss.item()}, DPO Loss: {dpo_loss.item()}, Entropy Loss: {entropy_loss.item()}")

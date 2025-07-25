@@ -279,13 +279,14 @@ def stop_sequences_criteria(
     )
 
 
-def passsak(model, tokenizer, dataloader, generation_args):
-    model_name = getattr(model, "name_or_path", "model")
-    result_dir = os.path.join("result", model_name, "temperature={}".format(generation_args.get("temperature")))
+def pass_k(model, tokenizer, dataloader, generation_args):
+    # model_name = getattr(model, "name_or_path", "model")
+    output_dir = generation_args.get("output_dir")
+    result_dir = os.path.join(output_dir, generation_args.get("set"), "temperature={}".format(generation_args.get("temperature"))+"top_p={}".format(generation_args.get("top_p")))
     print(f"Saving results to {result_dir}")
     os.makedirs(result_dir, exist_ok=True)
-
-    n_list = [1, 2, 5, 10, 20, 30]
+    print("generation_args",generation_args)
+    n_list = [1, 2, 4, 8, 16, 32, 64, 128]
     for n in n_list:
         with open(os.path.join(result_dir, f"generations_n{n}.json"), "w") as f:
             pass  
@@ -300,7 +301,7 @@ def passsak(model, tokenizer, dataloader, generation_args):
     #         results.append(1)  
 
     for batch in tqdm(dataloader, desc="Evaluating batches", total=len(dataloader)):
-        passsak_per_query(model, tokenizer, batch, generation_args, result_dir)
+        pass_k_per_query(model, tokenizer, batch, generation_args, result_dir)
 
     summary = {}
     for n in n_list:
@@ -389,7 +390,7 @@ def generate_with_adaptive_temperature(
                 
     return generated_ids
 
-def passsak_per_query(model, tokenizer, batch, generation_args, result_dir):
+def pass_k_per_query(model, tokenizer, batch, generation_args, result_dir):
     batch = {k: v.to(model.device) for k, v in batch.items()}
     input_ids = batch["input_ids"]
     labels = batch["labels"]
@@ -413,12 +414,11 @@ def passsak_per_query(model, tokenizer, batch, generation_args, result_dir):
         return reference_clean in response_clean
 
     scorer = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=True)
-    adaptive_tmp = True
-    for n in [1, 2, 5, 10, 20, 30]:
-        
-        # Check the generation_args dictionary for the 'adaptive_tmp' flag
-        if adaptive_tmp == False:
-            # --- IF TRUE: Use the new adaptive temperature method ---
+    adaptive_tmp = False
+
+    for n in [1, 2, 4, 8, 16, 32, 64, 128]:
+        if adaptive_tmp:
+            # Adaptive temperature logic unchanged
             prompt_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(model.device)
             output_ids_list = []
             for _ in range(n):
@@ -427,29 +427,61 @@ def passsak_per_query(model, tokenizer, batch, generation_args, result_dir):
                     tokenizer=tokenizer,
                     prompt_ids=prompt_ids,
                     generation_args=generation_args,
-                    cT=generation_args.get("cT", 0.9) # Get cT from args, default to 0.9
+                    cT=generation_args.get("cT", 0.9)
                 )
                 output_ids_list.append(output_ids[0])
-            decoded_outputs = tokenizer.batch_decode(output_ids_list, skip_special_tokens=True, clean_up_tokenization_spaces=True)
-        
+            decoded_outputs = tokenizer.batch_decode(
+                output_ids_list, skip_special_tokens=True, clean_up_tokenization_spaces=True
+            )
+            del prompt_ids, output_ids_list
         else:
-            # --- ELSE: Use your original code with model.generate ---
-            prompts = [prompt] * n
-            inputs = tokenizer(prompts, return_tensors="pt", padding=True, add_special_tokens=True).to(model.device)
-            with torch.no_grad():
-                output_ids = model.generate(
-                    input_ids=inputs["input_ids"],
-                    attention_mask=inputs["attention_mask"],
-                    max_new_tokens=generation_args.get("max_new_tokens", 256),
-                    do_sample=True,
-                    num_return_sequences=n,
-                    pad_token_id=tokenizer.eos_token_id,
-                    top_p=generation_args.get("top_p", 0.9),
-                    temperature=generation_args.get("temperature", 0.1),
+            decoded_outputs = []
+            # Use batch_size = 32 for n >= 64
+            if n >= 64:
+                batch_size = 32
+                for start in range(0, n, batch_size):
+                    current_batch = min(batch_size, n - start)
+                    prompts = [prompt] * current_batch
+                    inputs = tokenizer(prompts, return_tensors="pt", padding=True, add_special_tokens=True).to(model.device)
+                    with torch.no_grad():
+                        output_ids = model.generate(
+                            input_ids=inputs["input_ids"],
+                            attention_mask=inputs["attention_mask"],
+                            max_new_tokens=generation_args.get("max_new_tokens", 256),
+                            do_sample=True,
+                            num_return_sequences=1,  # FIXED: 1 per prompt
+                            pad_token_id=tokenizer.eos_token_id,
+                            top_p=generation_args.get("top_p", 0.9),
+                            temperature=generation_args.get("temperature", 0.1)
+                        )
+                    decoded_outputs.extend(tokenizer.batch_decode(
+                        output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True
+                    ))
+                    # Cleanup after each mini-batch
+                    del inputs, output_ids
+                    torch.cuda.empty_cache()
+            else:
+                # For n < 64, process in a single batch
+                prompts = [prompt] * n
+                inputs = tokenizer(prompts, return_tensors="pt", padding=True, add_special_tokens=True).to(model.device)
+                with torch.no_grad():
+                    output_ids = model.generate(
+                        input_ids=inputs["input_ids"],
+                        attention_mask=inputs["attention_mask"],
+                        max_new_tokens=generation_args.get("max_new_tokens", 256),
+                        do_sample=True,
+                        num_return_sequences=1,  # FIXED: 1 per prompt
+                        pad_token_id=tokenizer.eos_token_id,
+                        top_p=generation_args.get("top_p", 0.9),
+                        temperature=generation_args.get("temperature", 0.1)
+                    )
+                decoded_outputs = tokenizer.batch_decode(
+                    output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True
                 )
-            decoded_outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True)
+                del inputs, output_ids
+                torch.cuda.empty_cache()
 
-        # --- The rest of the evaluation code remains the same ---
+        # --- Evaluation ---
         responses = []
         best_rouge = -1
         best_idx = -1
@@ -463,9 +495,14 @@ def passsak_per_query(model, tokenizer, batch, generation_args, result_dir):
                 "rougeL_recall": rouge_recall,
                 "exact_match": exact_score
             })
-            if rouge_recall > best_rouge:
-                best_rouge = rouge_recall
-                best_idx = idx
+            if generation_args.get("set") == "forget":
+                if rouge_recall > best_rouge:
+                    best_rouge = rouge_recall
+                    best_idx = idx
+            else:
+                if rouge_recall < best_rouge:
+                    best_rouge = rouge_recall
+                    best_idx = idx
 
         if best_idx == -1 and responses:
             best_idx = 0
@@ -486,6 +523,11 @@ def passsak_per_query(model, tokenizer, batch, generation_args, result_dir):
         with open(os.path.join(result_dir, f"generations_n{n}.json"), "a") as f:
             json.dump(result, f, ensure_ascii=False)
             f.write("\n")
+
+        # Final cleanup for each `n` loop
+        del decoded_outputs, responses
+        torch.cuda.empty_cache()
+
 
 # def passsak_per_query(model, tokenizer, batch, generation_args, result_dir):
 #     batch = {k: v.to(model.device) for k, v in batch.items()}

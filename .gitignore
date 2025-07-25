@@ -2,6 +2,7 @@
 submit.py
 !src/data/__init__.py
 logs/
+log/
 unity/
 src/data/test.py
 src/data/__pycache__
@@ -10,6 +11,7 @@ logs/
 hf_cache/
 cache*/
 saves*/
+results_plot*/
 notebooks/
 output*/
 wandb/

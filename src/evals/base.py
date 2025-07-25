@@ -71,7 +71,8 @@ class Evaluator:
         # Set output_dir and file to store results
         output_dir = output_dir if output_dir else self.eval_cfg.output_dir
         logs_file_path = self.get_logs_file_path(output_dir)
-        summary_file_path = self.get_logs_file_path(output_dir, suffix="temperature"+str(kwargs.get("temperature", 1.0))+"SUMMARY")
+
+        summary_file_path = self.get_logs_file_path(output_dir, suffix="temperature"+str(kwargs.get("temperature", 1.0))+str(kwargs.get("top_p",1.0))+"SUMMARY")
 
         # Load existing results from file if any.
         logs = self.load_logs_from_file(logs_file_path) if not overwrite else {}
@@ -84,6 +85,10 @@ class Evaluator:
         for metric_name, metric_fn in self.metrics.items():
             print(f"Evaluating metric: {metric_name}")
             print(f"Metric function: {metric_fn}")
+            if "forget" in metric_name:
+                dataset = "forget"
+            else:
+                dataset = "retain"
             if not overwrite and metric_name in logs and logs[metric_name]:
                 logger.info(f"Skipping {metric_name}, already evaluated.")
                 if "agg_value" in logs[metric_name]:
@@ -97,6 +102,9 @@ class Evaluator:
                 "tokenizer": kwargs.get("tokenizer", None),
                 "template_args": kwargs.get("template_args", None),
                 "temperature": kwargs.get("temperature", 1.0),
+                "top_p": kwargs.get("top_p", 1.0),
+                "output_dir": output_dir,
+                "set": dataset
             }
             metrics_args = self.eval_cfg.metrics[metric_name]
             _
@@ -107,9 +115,9 @@ class Evaluator:
                 **kwargs,
                 **metrics_args,
             )
-            if "agg_value" in result:
-                logger.info(f"Result for metric {metric_name}:\t{result['agg_value']}")
-            self.save_logs(logs, logs_file_path)
-            self.save_logs(self.summarize(logs), summary_file_path)
+            # if "agg_value" in result:
+            #     logger.info(f"Result for metric {metric_name}:\t{result['agg_value']}")
+            # self.save_logs(logs, logs_file_path)
+            # self.save_logs(self.summarize(logs), summary_file_path)
 
-        return self.summarize(logs)
+        # return self.summarize(logs)
