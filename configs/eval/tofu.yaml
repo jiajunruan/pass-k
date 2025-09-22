@@ -6,7 +6,7 @@ defaults: # include all defined metrics files
   # metric key below, enabled by the @package directive at the top of each configuration file.
     # - forget_quality
     # - forget_Q_A_Prob
-    - forget_Q_A_ROUGE
+    # - forget_Q_A_ROUGE
     # - model_utility # populated in the metrics key as metrics.model_utility
     # - privleak
     # - extraction_strength
@@ -19,6 +19,7 @@ defaults: # include all defined metrics files
     # - mia_reference # set reference model path appropriately
     # - forget_Q_A_gibberish
     - retain_Q_A_ROUGE
+    # - wf_Q_A_Prob_normalised
 
 handler: TOFUEvaluator
 output_dir: ${paths.output_dir} # set to default eval directory

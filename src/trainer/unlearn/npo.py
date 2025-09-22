@@ -11,6 +11,8 @@ class NPO(GradDiff):
 
     def compute_loss(self, model, inputs, return_outputs=False):
         forget_inputs = inputs["forget"]
+        # print(f"Forget batch size: {forget_inputs['input_ids'].shape[0]}")
+        # print("forget inputs content", forget_inputs)
 
         forget_loss, forget_outputs = compute_dpo_loss(
             model=model,

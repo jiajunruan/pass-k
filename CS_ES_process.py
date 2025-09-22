@@ -19,6 +19,7 @@ def aggregate_metrics_for_subfolder(subfolder_path):
 
     # Define the 'i' values
     generation_indices = [1, 2, 4, 8, 16, 32, 64, 128]
+#     generation_indices
 
     for i in tqdm(generation_indices, desc="Aggregating generation files"):
         file_name = f"generations_n{i}.json"
@@ -128,14 +129,23 @@ if __name__ == "__main__":
     # Define your list of main_folder paths here
     my_main_folders = [
         # "/users/2/jruan/pass-k/saves/eval/BLUR-NPO",
-        "/users/2/jruan/pass-k/saves/eval/GradDiff",
-        "/users/2/jruan/pass-k/saves/eval/NPO",
-        "/users/2/jruan/pass-k/saves/eval/NPO+ENT",
-        "/users/2/jruan/pass-k/saves/eval/Original",
+        # "/users/2/jruan/pass-k/saves/eval/GradDiff",
+        # "/users/2/jruan/pass-k/saves/eval/NPO",
+        # "/users/2/jruan/pass-k/saves/eval/NPO+ENT",
+        "/users/2/jruan/pass-k/saves/eval/ada",
+        # "/users/2/jruan/pass-k/saves/eval/beta0.1alpha4gamma1",
+        # "/users/2/jruan/pass-k/saves/eval/beta0.1alpha2gamma1"
+        # "/users/2/jruan/pass-k/saves/eval/beta1alpha2gamma1ada",
+        # "/users/2/jruan/pass-k/saves/eval/beta0.1alpha2gamma1ada",
+        # "/users/2/jruan/pass-k/saves/eval/Original",
         "/users/2/jruan/pass-k/saves/eval/Retrain",
-        "/users/2/jruan/pass-k/saves/eval/SimNPO",
-        "/users/2/jruan/pass-k/saves/eval/RMU",
+        # "/users/2/jruan/pass-k/saves/eval/SimNPO",
+        # "/users/2/jruan/pass-k/saves/eval/RMU",
         # "/users/2/jruan/pass-k/saves/eval/GradAscent"
+        # "/users/2/jruan/pass-k/saves/eval/beta1alpha4gamma1",
+        # "/users/2/jruan/pass-k/saves/eval/beta1alpha2gamma1",
+        # "/users/2/jruan/pass-k/saves/eval/beta0.1alpha4gamma1",
+        # "/users/2/jruan/pass-k/saves/eval/beta0.1alpha2gamma1",
         ]
     
     # Call the main processing function

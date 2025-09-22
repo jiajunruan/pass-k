@@ -4,6 +4,6 @@ defaults:
 handler: NPO
 method_args:
   beta: 0.5
-  alpha: 10.0
+  alpha: 5
   gamma: 1.0
   retain_loss_type: NLL

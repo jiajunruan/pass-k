@@ -80,6 +80,9 @@ class LMEvalEvaluator(Evaluator):
         # Prepare model for evaluation
         kwargs = {"tokenizer": kwargs.get("tokenizer", None)}
         model = self.prepare_model(model, **kwargs)
+        print("temperature:", kwargs.get("temperature"))
+        print("top_p:", kwargs.get("top_p"))
+
 
         # Set output_dir and file to store results
         output_dir = output_dir if output_dir else self.eval_cfg.output_dir
@@ -108,6 +111,8 @@ class LMEvalEvaluator(Evaluator):
                 task_manager=self.task_manager,
                 **self.simple_evaluate_args,
             )
+            print("temperature:", kwargs.get("temperature", 1.0))
+            print("top_p:", kwargs.get("top_p", 1.0))
             logs.update({task_name: results["samples"]})
             summary.update(self.summarize(results, task_name))
             self.save_logs(logs, logs_file_path)

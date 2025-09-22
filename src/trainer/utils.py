@@ -48,23 +48,41 @@ def compute_batch_nll(model, inputs):
 from torch.distributions import Categorical
 
 def compute_entropy_loss(model, inputs):
-    """Compute the entropy of the model's predictions for given inputs."""
+    """Compute the entropy of the model's predictions for given inputs, with masking."""
     outputs = model(**inputs)
     logits = outputs.logits  # [batch_size, seq_len, vocab_size]
     labels = inputs["labels"]
     
-    # Align logits and labels
-    shifted_labels = labels[..., 1:].contiguous()
-    logits = logits[..., :-1, :].contiguous()
+    # Align logits and labels by excluding the last token from logits and first from labels
+    shifted_labels = labels[..., 1:].contiguous()  # (bs, seq_len - 1)
+    logits = logits[..., :-1, :].contiguous()  # (bs, seq_len - 1, vocab_size)
     
     # Compute probabilities
     probs = torch.softmax(logits, dim=-1)
     
-    # Calculate entropy per token, then average over sequence
+    # Calculate entropy per token
     entropy = Categorical(probs=probs).entropy()  # [batch_size, seq_len-1]
-    avg_entropy = entropy.mean(dim=-1)  # [batch_size]
     
-    return avg_entropy.mean()  # scalar
+    # Create a mask for valid labels (non -100)
+    # This mask will have the same shape as shifted_labels and entropy
+    loss_mask = (shifted_labels != -100).float() # Convert to float for multiplication
+    
+    # Apply the mask to the entropy
+    masked_entropy = entropy * loss_mask
+    
+    # Calculate the sum of masked entropy and the sum of the mask
+    # This allows for averaging only over the valid (non-masked) tokens
+    sum_masked_entropy = masked_entropy.sum()
+    sum_loss_mask = loss_mask.sum()
+    
+    # Avoid division by zero if all tokens are masked
+    if sum_loss_mask == 0:
+        return torch.tensor(0.0, device=logits.device)
+    
+    # Compute the average entropy over the non-masked tokens
+    loss = sum_masked_entropy / sum_loss_mask
+    
+    return loss
 
 def compute_dpo_loss(model, ref_model, win_inputs=None, lose_inputs=None, beta=1.0):
     """

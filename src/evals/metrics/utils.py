@@ -12,6 +12,7 @@ from data.utils import IGNORE_INDEX
 import warnings
 import os
 import json
+import torch.nn.functional as F
 
 
 def dict_transpose(evals):
@@ -286,19 +287,11 @@ def pass_k(model, tokenizer, dataloader, generation_args):
     print(f"Saving results to {result_dir}")
     os.makedirs(result_dir, exist_ok=True)
     print("generation_args",generation_args)
-    n_list = [1, 2, 4, 8, 16, 32, 64, 128]
+    # n_list = [1, 2, 4, 8, 16, 32, 64, 128]
+    n_list = [200]
     for n in n_list:
         with open(os.path.join(result_dir, f"generations_n{n}.json"), "w") as f:
             pass  
-
-    # for i, batch in enumerate(tqdm(dataloader, desc="Evaluating batches", total=len(dataloader))):
-    #     if i >= 2:
-    #         print("Breaking after 2 batches for testing purposes.")
-    #         break
-    #     else:
-    #         print(f"Processing batch {i+1}...")
-    #         passsak_per_query(model, tokenizer, batch, generation_args, result_dir)
-    #         results.append(1)  
 
     for batch in tqdm(dataloader, desc="Evaluating batches", total=len(dataloader)):
         pass_k_per_query(model, tokenizer, batch, generation_args, result_dir)
@@ -414,9 +407,9 @@ def pass_k_per_query(model, tokenizer, batch, generation_args, result_dir):
         return reference_clean in response_clean
 
     scorer = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=True)
-    adaptive_tmp = False
-
-    for n in [1, 2, 4, 8, 16, 32, 64, 128]:
+    adaptive_tmp = True
+#     for n in [1, 2, 4, 8, 16, 32, 64, 128]:
+    for n in [200]:
         if adaptive_tmp:
             # Adaptive temperature logic unchanged
             prompt_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(model.device)
@@ -444,16 +437,26 @@ def pass_k_per_query(model, tokenizer, batch, generation_args, result_dir):
                     prompts = [prompt] * current_batch
                     inputs = tokenizer(prompts, return_tensors="pt", padding=True, add_special_tokens=True).to(model.device)
                     with torch.no_grad():
-                        output_ids = model.generate(
-                            input_ids=inputs["input_ids"],
-                            attention_mask=inputs["attention_mask"],
-                            max_new_tokens=generation_args.get("max_new_tokens", 256),
-                            do_sample=True,
-                            num_return_sequences=1,  # FIXED: 1 per prompt
-                            pad_token_id=tokenizer.eos_token_id,
-                            top_p=generation_args.get("top_p", 0.9),
-                            temperature=generation_args.get("temperature", 0.1)
-                        )
+                        if generation_args.get("temperature")==0:
+                            output_ids = model.generate(
+                                input_ids=inputs["input_ids"],
+                                attention_mask=inputs["attention_mask"],
+                                max_new_tokens=generation_args.get("max_new_tokens", 256),
+                                do_sample=False,  # Greedy decoding
+                                num_return_sequences=1,  # FIXED: 1 per prompt
+                                pad_token_id=tokenizer.eos_token_id,
+                            )
+                        else:
+                            output_ids = model.generate(
+                                input_ids=inputs["input_ids"],
+                                attention_mask=inputs["attention_mask"],
+                                max_new_tokens=generation_args.get("max_new_tokens", 256),
+                                do_sample=True,
+                                num_return_sequences=1,  # FIXED: 1 per prompt
+                                pad_token_id=tokenizer.eos_token_id,
+                                top_p=generation_args.get("top_p", 0.9),
+                                temperature=generation_args.get("temperature", 0.1)
+                            )
                     decoded_outputs.extend(tokenizer.batch_decode(
                         output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True
                     ))
@@ -465,16 +468,26 @@ def pass_k_per_query(model, tokenizer, batch, generation_args, result_dir):
                 prompts = [prompt] * n
                 inputs = tokenizer(prompts, return_tensors="pt", padding=True, add_special_tokens=True).to(model.device)
                 with torch.no_grad():
-                    output_ids = model.generate(
-                        input_ids=inputs["input_ids"],
-                        attention_mask=inputs["attention_mask"],
-                        max_new_tokens=generation_args.get("max_new_tokens", 256),
-                        do_sample=True,
-                        num_return_sequences=1,  # FIXED: 1 per prompt
-                        pad_token_id=tokenizer.eos_token_id,
-                        top_p=generation_args.get("top_p", 0.9),
-                        temperature=generation_args.get("temperature", 0.1)
-                    )
+                    if generation_args.get("temperature")==0:
+                        output_ids = model.generate(
+                            input_ids=inputs["input_ids"],
+                            attention_mask=inputs["attention_mask"],
+                            max_new_tokens=generation_args.get("max_new_tokens", 256),
+                            do_sample=False,  # Greedy decoding
+                            num_return_sequences=1,  # FIXED: 1 per prompt
+                            pad_token_id=tokenizer.eos_token_id,
+                        )
+                    else:
+                        output_ids = model.generate(
+                            input_ids=inputs["input_ids"],
+                            attention_mask=inputs["attention_mask"],
+                            max_new_tokens=generation_args.get("max_new_tokens", 256),
+                            do_sample=True,
+                            num_return_sequences=1,  # FIXED: 1 per prompt
+                            pad_token_id=tokenizer.eos_token_id,
+                            top_p=generation_args.get("top_p", 0.9),
+                            temperature=generation_args.get("temperature", 0.1)
+                        )
                 decoded_outputs = tokenizer.batch_decode(
                     output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True
                 )
@@ -529,7 +542,164 @@ def pass_k_per_query(model, tokenizer, batch, generation_args, result_dir):
         torch.cuda.empty_cache()
 
 
-# def passsak_per_query(model, tokenizer, batch, generation_args, result_dir):
+import torch
+import torch.nn.functional as F
+
+
+# def generate_with_adaptive_temperature_accelerated(
+#     model, 
+#     tokenizer, 
+#     prompt_ids, 
+#     generation_args,
+#     cT=0.9 # Confidence threshold for adaptive temperature
+# ):
+#     """
+#     Generates text sequences token-by-token using adaptive temperature scaling,
+#     supporting batch generation.
+    
+#     prompt_ids: torch.Tensor of shape (batch_size, sequence_length)
+#     """
+#     # Get parameters from generation_args
+#     max_new_tokens = generation_args.get("max_new_tokens", 256)
+#     normal_temp = generation_args.get("temperature", 0.1)
+#     top_p = generation_args.get("top_p", 0.9)
+#     eos_token_id = tokenizer.eos_token_id
+
+#     batch_size = prompt_ids.shape[0]
+#     generated_ids = prompt_ids.clone()
+    
+#     confidence_history_list = [[0.0] for _ in range(batch_size)]
+
+#     active_sequences = torch.ones(batch_size, dtype=torch.bool, device=model.device)
+#     num_active_sequences = batch_size
+
+#     with torch.no_grad():
+#         for _ in range(max_new_tokens):
+#             if num_active_sequences == 0:
+#                 break
+
+#             current_input_ids = generated_ids[active_sequences]
+#             if current_input_ids.shape[0] == 0:
+#                 break
+
+#             outputs = model(input_ids=current_input_ids)
+#             next_token_logits = outputs.logits[:, -1, :]
+
+#             next_token_probs = F.softmax(next_token_logits, dim=-1)
+#             most_likely_token_prob_active = torch.max(next_token_probs, dim=-1).values
+
+#             current_confidence_active = torch.zeros_like(most_likely_token_prob_active)
+#             active_indices = torch.where(active_sequences)[0]
+
+#             for i, original_idx in enumerate(active_indices):
+#                 confidence_history_list[original_idx].append(most_likely_token_prob_active[i].item())
+#                 current_confidence_active[i] = sum(confidence_history_list[original_idx]) / len(confidence_history_list[original_idx])
+
+#             temperature_active = torch.where(current_confidence_active > cT, 
+#                                              torch.tensor(0.0, device=model.device), 
+#                                              torch.tensor(normal_temp, device=model.device))
+
+#             next_token_id_active = torch.zeros(num_active_sequences, dtype=torch.long, device=model.device)
+
+#             greedy_mask = (temperature_active == 0.0)
+#             sampled_mask = ~greedy_mask
+
+#             if torch.any(greedy_mask):
+#                 next_token_id_active[greedy_mask] = torch.argmax(next_token_logits[greedy_mask], dim=-1)
+
+#             if torch.any(sampled_mask):
+#                 # Apply temperature scaling for sampled sequences
+#                 scaled_logits_sampled = next_token_logits[sampled_mask] / temperature_active[sampled_mask].unsqueeze(-1)
+                
+#                 # Ensure temperature is not effectively zero for sampled sequences
+#                 # A very small non-zero temperature can cause inf/nan if input logits are also large.
+#                 # If temperature_active[sampled_mask] contains any zeros, this division will produce inf.
+#                 # This should ideally be caught earlier by the greedy_mask, but double-checking here.
+#                 if (temperature_active[sampled_mask] == 0).any():
+#                     # This implies a logic error if sampled_mask is true but temperature is 0.
+#                     # As a safety, you could force a small non-zero value or log a warning.
+#                     # For now, let's assume this branch is only for non-zero temperatures.
+#                     pass # The `greedy_mask` should prevent this.
+
+#                 # --- Optimized Top-p Implementation ---
+#                 sorted_logits, sorted_indices = torch.sort(scaled_logits_sampled, descending=True)
+                
+#                 # Apply softmax to sorted logits to get sorted probabilities
+#                 sorted_probs = F.softmax(sorted_logits, dim=-1)
+                
+#                 # Calculate cumulative probabilities
+#                 cumulative_probs = torch.cumsum(sorted_probs, dim=-1)
+                
+#                 # Create a mask for tokens to keep: cumulative_probs <= top_p
+#                 # Also, ensure at least one token is kept (the highest prob token)
+#                 # The first token is always kept by default in this setup because cumulative_probs starts >= 0.
+#                 indices_to_remove = cumulative_probs > top_p
+                
+#                 # Shift the mask to the right to retain the first token that crosses the top_p threshold
+#                 indices_to_remove[..., 1:] = indices_to_remove[..., :-1].clone()
+#                 indices_to_remove[..., 0] = False # Ensure the highest probability token is always kept
+                
+#                 # Create a mask to set logits to -inf
+#                 # This scatter operation creates a mask in the original unsorted order
+#                 logits_to_remove_mask = torch.zeros_like(scaled_logits_sampled, dtype=torch.bool)
+#                 logits_to_remove_mask.scatter_(dim=1, index=sorted_indices, src=indices_to_remove)
+
+#                 # Set logits to -inf for tokens to remove
+#                 scaled_logits_sampled[logits_to_remove_mask] = -float('Inf')
+
+#                 # After masking, re-normalize probabilities
+#                 probs_sampled = F.softmax(scaled_logits_sampled, dim=-1)
+
+#                 # Robustness check for all-zero probabilities after softmax (can happen if all logits are -inf)
+#                 # This line was causing the IndexError.
+#                 # The issue was that probs_sampled.sum(dim=-1, keepdim=True) == 0 creates a mask of shape (N, 1)
+#                 # and you were trying to use it to index a tensor of shape (N, V) for element-wise assignment.
+#                 # Instead, we want to set *entire rows* to uniform.
+                
+#                 # Identify rows where the sum of probabilities is effectively zero (or very close)
+#                 # Using a small epsilon instead of exactly 0 can be more robust against floating point inaccuracies
+#                 zero_sum_mask = (probs_sampled.sum(dim=-1) < 1e-6) # Check if sum is very close to zero
+                
+#                 if torch.any(zero_sum_mask):
+#                     num_vocab = probs_sampled.shape[-1]
+#                     uniform_prob_value = 1.0 / num_vocab
+                    
+#                     # Create a tensor of uniform probabilities for the problematic rows
+#                     uniform_dist_for_zero_rows = torch.full_like(probs_sampled[zero_sum_mask], uniform_prob_value)
+                    
+#                     # Assign this uniform distribution to the problematic rows
+#                     probs_sampled[zero_sum_mask] = uniform_dist_for_zero_rows
+                
+#                 # Now probs_sampled should be valid for torch.multinomial
+#                 next_token_id_active[sampled_mask] = torch.multinomial(probs_sampled, num_samples=1).squeeze(1)
+
+#             # ... (rest of the function, which was largely fine)
+#             current_max_len = generated_ids.shape[1]
+#             new_max_len = current_max_len + 1
+
+#             padded_generated_ids = torch.full((batch_size, new_max_len), 
+#                                                 tokenizer.pad_token_id if tokenizer.pad_token_id is not None else eos_token_id, 
+#                                                 dtype=torch.long, device=model.device)
+#             padded_generated_ids[:, :current_max_len] = generated_ids
+
+#             # Ensure next_token_id_active has correct shape (num_active_sequences,) before indexing
+#             # It already should be from the .squeeze(1) on multinomial output
+#             padded_generated_ids[active_sequences, new_max_len - 1] = next_token_id_active
+#             generated_ids = padded_generated_ids
+
+#             eos_generated = (next_token_id_active == eos_token_id)
+            
+#             # Update active_sequences mask
+#             # Ensure active_indices is consistent.
+#             # active_sequences[active_indices[eos_generated]] = False
+#             # Better:
+#             active_sequences[active_indices[eos_generated]] = False
+            
+#             num_active_sequences = active_sequences.sum().item()
+
+#     return generated_ids
+
+# def pass_k_per_query_accelerated(model, tokenizer, batch, generation_args, result_dir):
 #     batch = {k: v.to(model.device) for k, v in batch.items()}
 #     input_ids = batch["input_ids"]
 #     labels = batch["labels"]
@@ -553,24 +723,58 @@ def pass_k_per_query(model, tokenizer, batch, generation_args, result_dir):
 #         return reference_clean in response_clean
 
 #     scorer = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=True)
+#     adaptive_tmp = True # This needs to be controlled by your overall logic
 
-#     for n in [1, 2, 5, 10, 20, 30]:
-#         prompts = [prompt] * n
-#         inputs = tokenizer(prompts, return_tensors="pt", padding=True, add_special_tokens=True).to(model.device)
-#         with torch.no_grad():
-#             output_ids = model.generate(
-#                 input_ids=inputs["input_ids"],
-#                 attention_mask=inputs["attention_mask"],
-#                 max_new_tokens=generation_args.get("max_new_tokens", 256),
-#                 do_sample=True,
-#                 num_return_sequences=n,
-#                 pad_token_id=tokenizer.eos_token_id,
-#                 top_p=generation_args.get("top_p", 0.9),
-#                 temperature=generation_args.get("temperature", 0.1),
+#     for n in [1, 2, 4, 8, 16, 32, 64, 128]:
+#         if adaptive_tmp:
+#             # Prepare prompts for batch generation
+#             # Repeat the prompt 'n' times for batching
+#             prompts_for_batch = [prompt] * n
+#             prompt_ids_batch = tokenizer(prompts_for_batch, return_tensors="pt", 
+#                                          padding=True, add_special_tokens=True).input_ids.to(model.device)
+            
+#             # Call the accelerated adaptive temperature generation function
+#             output_ids_batch = generate_with_adaptive_temperature_accelerated(
+#                 model=model,
+#                 tokenizer=tokenizer,
+#                 prompt_ids=prompt_ids_batch,
+#                 generation_args=generation_args,
+#                 cT=generation_args.get("cT", 0.9)
 #             )
+            
+#             # Decode the entire batch of generated sequences
+#             decoded_outputs = tokenizer.batch_decode(
+#                 output_ids_batch, skip_special_tokens=True, clean_up_tokenization_spaces=True
+#             )
+#             del prompt_ids_batch, output_ids_batch
+#             torch.cuda.empty_cache() # Clear cache after large operations
+#         else:
+#             decoded_outputs = []
+#             # Use batch_size = 32 for n >= 64, or any suitable batch size
+#             batch_size = 32 if n >= 64 else n # Use n as batch size if smaller than 32
+            
+#             for start in range(0, n, batch_size):
+#                 current_batch_size = min(batch_size, n - start)
+#                 prompts_chunk = [prompt] * current_batch_size
+#                 inputs = tokenizer(prompts_chunk, return_tensors="pt", padding=True, add_special_tokens=True).to(model.device)
+#                 with torch.no_grad():
+#                     output_ids = model.generate(
+#                         input_ids=inputs["input_ids"],
+#                         attention_mask=inputs["attention_mask"],
+#                         max_new_tokens=generation_args.get("max_new_tokens", 256),
+#                         do_sample=True,
+#                         num_return_sequences=1,
+#                         pad_token_id=tokenizer.eos_token_id,
+#                         top_p=generation_args.get("top_p", 0.9),
+#                         temperature=generation_args.get("temperature", 0.1)
+#                     )
+#                 decoded_outputs.extend(tokenizer.batch_decode(
+#                     output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True
+#                 ))
+#                 del inputs, output_ids
+#                 torch.cuda.empty_cache()
 
-#         decoded_outputs = tokenizer.batch_decode(output_ids, skip_special_tokens=True, clean_up_tokenization_spaces=True)
-
+#         # --- Evaluation --- (Remains largely the same)
 #         responses = []
 #         best_rouge = -1
 #         best_idx = -1
@@ -584,15 +788,23 @@ def pass_k_per_query(model, tokenizer, batch, generation_args, result_dir):
 #                 "rougeL_recall": rouge_recall,
 #                 "exact_match": exact_score
 #             })
-#             if rouge_recall > best_rouge:
-#                 best_rouge = rouge_recall
-#                 best_idx = idx
+#             if generation_args.get("set") == "forget":
+#                 if rouge_recall > best_rouge:
+#                     best_rouge = rouge_recall
+#                     best_idx = idx
+#             else:
+#                 if best_rouge == -1 or rouge_recall < best_rouge: # Initialize best_rouge correctly for 'remember'
+#                     best_rouge = rouge_recall
+#                     best_idx = idx
+
+#         if best_idx == -1 and responses:
+#             best_idx = 0
 
 #         best_answer = {
 #             "response": responses[best_idx]["response"],
 #             "rougeL_recall": responses[best_idx]["rougeL_recall"],
 #             "exact_match": responses[best_idx]["exact_match"]
-#         }
+#         } if best_idx != -1 else {"response": "", "rougeL_recall": 0, "exact_match": 0}
 
 #         result = {
 #             "prompt": prompt,
@@ -601,9 +813,14 @@ def pass_k_per_query(model, tokenizer, batch, generation_args, result_dir):
 #             "best_answer": best_answer
 #         }
 
+#         os.makedirs(result_dir, exist_ok=True) # Ensure directory exists
 #         with open(os.path.join(result_dir, f"generations_n{n}.json"), "a") as f:
 #             json.dump(result, f, ensure_ascii=False)
 #             f.write("\n")
+
+#         # Final cleanup for each `n` loop
+#         del decoded_outputs, responses
+#         torch.cuda.empty_cache()
 
 
 def eval_text_similarity(model, tokenizer, batch, generation_args):

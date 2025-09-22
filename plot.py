@@ -10,14 +10,23 @@ my_main_folders = [
     "/users/2/jruan/pass-k/saves/eval/BLUR-NPO",
     "/users/2/jruan/pass-k/saves/eval/GradDiff",
     "/users/2/jruan/pass-k/saves/eval/NPO",
-    "/users/2/jruan/pass-k/saves/eval/NPO+ENT",
+    # "/users/2/jruan/pass-k/saves/eval/NPO+ENT",
     "/users/2/jruan/pass-k/saves/eval/Original",
     "/users/2/jruan/pass-k/saves/eval/Retrain",
     "/users/2/jruan/pass-k/saves/eval/SimNPO",
-    "/users/2/jruan/pass-k/saves/eval/RMU"
+    "/users/2/jruan/pass-k/saves/eval/RMU",
+    "/users/2/jruan/pass-k/saves/eval/NPO+ENT",
+    "/users/2/jruan/pass-k/saves/eval/ada",
+    # "/users/2/jruan/pass-k/saves/eval/beta1alpha4gamma1",
+    # "/users/2/jruan/pass-k/saves/eval/beta1alpha2gamma1",
+    # "/users/2/jruan/pass-k/saves/eval/beta0.1alpha4gamma1",
+    # "/users/2/jruan/pass-k/saves/eval/beta1alpha2gamma1",
+    # "/users/2/jruan/pass-k/saves/eval/beta1alpha2gamma1ada",
+    # "/users/2/jruan/pass-k/saves/eval/beta1alpha2gamma1ada"
 ]
 
 subfolder_config_names = [
+    "temperature=0.0top_p=0.0",
     "temperature=0.2top_p=0.2",
     "temperature=0.8top_p=0.2",
     "temperature=0.2top_p=1.0",
@@ -159,6 +168,7 @@ def process_and_plot_all_eval_data(main_folders_list, config_names_list, gen_ind
 
                 data_type_path = os.path.join(main_folder_path, data_type)
                 if not os.path.isdir(data_type_path):
+                    print(data_type_path)
                     print(f"⚠️ Skipping missing {data_type} folder in {main_model_name}.")
                     continue
 
@@ -217,7 +227,7 @@ def process_and_plot_all_eval_data(main_folders_list, config_names_list, gen_ind
             combined_save_path = os.path.join(output_base_dir, data_type, f"{filename_prefix}_combined.png")
             combine_images_grid_with_titles(
                 image_paths_for_collage, titles_for_collage,
-                grid_shape=(2, 4),
+                grid_shape=(3, 3),
                 save_path=combined_save_path,
                 super_title=plot_metric_title
             )

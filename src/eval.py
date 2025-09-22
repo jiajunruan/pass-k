@@ -18,11 +18,16 @@ def main(cfg: DictConfig):
     assert model_cfg is not None, "Invalid model yaml passed in train config."
     model, tokenizer = get_model(model_cfg)
     param_pairs = [
-        (0.2, 0.2),
-        (0.2, 1.0),
-        (0.8, 0.2),
-        (0.8, 1.0),
-        (1.0, 1.0)
+        # (0.0, 0.0),
+        # (0.2, 0.2),
+        # (0.2, 1.0),
+        # (0.8, 0.2),
+        # (0.8, 1.0),
+        # (1.0, 1.0)
+#         (0.2,0.8),
+        (0.8,0.8),
+#         (1.0,0.8),
+#         (1.0,0.2),
     ]
     eval_cfgs = cfg.eval
     evaluators = get_evaluators(eval_cfgs)

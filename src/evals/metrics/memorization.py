@@ -106,23 +106,11 @@ def rouge(model, **kwargs):
     pass_k(model, tokenizer, dataloader, generation_args)
     end_time=time.time()
     print("duration_time:",end_time-start_time)
-    # import time
-    # start_time = time.time()
-    # for i in range(3):
-    #     if i == 0:
-    #         generation_args["temperature"] = 0.1
-    #     elif i == 1:
-    #         generation_args["temperature"] = 1
-    #     else:
-    #         generation_args["temperature"] = 2
-    #     print ("starting passsak with temperature:", generation_args["temperature"])
-    #     passsak(model, tokenizer, dataloader, generation_args)
-    # end_time = time.time()
-    # print("Time taken for passsak:", end_time - start_time)
+
     # batch_size = 32
     # dataloader = DataLoader(data, batch_size=batch_size, collate_fn=collator)
     # fun_args = {"tokenizer": tokenizer, "generation_args": generation_args}
-    # # print("fun_args:", fun_args)
+    # print("fun_args:", fun_args)
     # scores_by_index = run_batchwise_evals(
     #     model,
     #     dataloader,
