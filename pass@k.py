@@ -24,11 +24,12 @@ def calculate_pass_at_k(n, c, k):
     return 1.0 - (fail_combinations / total_combinations)
 
 def process_file(input_filename, output_filename):
-    # 设定文件名和k值
+
     k_values = [1, 2, 4, 8, 16, 32, 64, 128]
+    # 400 questions in evluation set.
     total_entries = 400
     
-    # 初始化用于累加pass@k分数的字典
+
     sum_pass_at_k = {k: 0.0 for k in k_values}
     try:
         with open(input_filename, 'r', encoding='utf-8') as f:
@@ -38,27 +39,27 @@ def process_file(input_filename, output_filename):
                 
                 data = json.loads(line)
                 
-                # 检查数据结构
+
                 if 'responses' not in data:
                     continue
                 
                 responses = data['responses']
                 n = len(responses)
                 
-                # 计算通过的response数量 (c)
+
                 c = sum(1 for response in responses if response.get('ES') == 1)
                 # for response in responses:
                 #     if response.get('ES') == 1:
                 #         print(response.get("response"))
-                # 计算并累加每个k值下的pass@k
+
                 for k in k_values:
                     pass_at_k_score = calculate_pass_at_k(n, c, k)
                     sum_pass_at_k[k] += pass_at_k_score
                     
-        # 计算平均值
+        
         average_pass_at_k = {k: score / total_entries for k, score in sum_pass_at_k.items()}
         
-        # 将结果保存到JSON文件
+        
         with open(output_filename, 'w', encoding='utf-8') as outfile:
             json.dump(average_pass_at_k, outfile, indent=4)
             
@@ -86,15 +87,11 @@ if __name__ == "__main__":
             subdir_path = os.path.join(main_dir, subdir)
             if not os.path.isdir(subdir_path):
                 continue
-            file_320 = os.path.join(subdir_path, "generations_n320.json")
+
             file_200 = os.path.join(subdir_path, "generations_n200.json")
-            file_128 = os.path.join(subdir_path, "generations_n128.json")
-            if os.path.exists(file_320):
-                input_file = file_320
-            elif os.path.exists(file_200):
-                input_file = file_200
-            else:
-                input_file = file_128
+
+            input_file = file_200
+
                 
             output_file = os.path.join(subdir_path, "rougeL_summary.json")
             process_file(input_file, output_file)

@@ -16,6 +16,23 @@
 </div>
 
 ---
+## 📖 Leak@k usage
+1. Generate responses:
+```
+Add your model to the model list in pass-k.py, and run it.
+```
+2. ES eval:
+```
+Update the generation directory in CS_ES_eval.py, and run it.
+```
+3. Leak@k result:
+```
+Update the evaluation direcotory in pass@k.py, and run it, results are in rougeL_summary.json. 
+```
+
+
+
+
 
 ## 📖 Overview
 
