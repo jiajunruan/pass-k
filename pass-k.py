@@ -1,18 +1,22 @@
 # A dictionary mapping method names to their model paths or identifiers.
-# model_names = {
+model_names = {
 #     "Original":"open-unlearning/tofu_Llama-3.2-1B-Instruct_full",
-#     "Retrain":"open-unlearning/tofu_Llama-3.2-1B-Instruct_retain90",
-#     "GradDiff":"open-unlearning/unlearn_tofu_Llama-3.2-1B-Instruct_forget10_GradDiff_lr1e-05_alpha5_epoch10",
+    # "Lora1": "/users/2/jruan/efficient-llm-unlearning/TOFU/llm_weights/ft_epoch5_lr1e-05_llama2-7b_full_wd0.01",
+#     "LoUK": "open-unlearning/tofu_Llama-3.2-1B-Instruct_full",
+#     "NPO-fix": "/users/2/jruan/open-unlearning/saves/unlearn/NPO-fix2",
 #     "NPO":"open-unlearning/unlearn_tofu_Llama-3.2-1B-Instruct_forget10_NPO_lr1e-05_beta0.5_alpha1_epoch10",
-#     # "NPO+gen3":"/users/2/jruan/open-unlearning/saves/unlearn/SAMPLE_UNLEARN1"
-#     # "NPO+ENT":"saves/unlearn/NPO_ENT",
+# #     # "NPO+gen3":"/users/2/jruan/open-unlearning/saves/unlearn/SAMPLE_UNLEARN1"
+#     "NPO+ENT":"saves/unlearn/NPO_ENT",
 #     "SimNPO":"open-unlearning/unlearn_tofu_Llama-3.2-1B-Instruct_forget10_SimNPO_lr1e-05_b4.5_a1_d1_g0.125_ep10",
-#     "BLUR-NPO":"HadiUMN/tofu_Llama-3.2-1B-Instruct_forget10_BLURNPO",
-#     "RMU":"open-unlearning/unlearn_tofu_Llama-3.2-1B-Instruct_forget10_RMU_lr1e-05_layer15_scoeff100_epoch10",
+    # "BLUR-NPO":"HadiUMN/tofu_Llama-3.2-1B-Instruct_forget10_BLURNPO",
+    # "RMU":"open-unlearning/unlearn_tofu_Llama-3.2-1B-Instruct_forget10_RMU_lr1e-05_layer15_scoeff100_epoch10",
+    # "Retrain":"open-unlearning/tofu_Llama-3.2-1B-Instruct_retain90",
+    # "GradDiff":"open-unlearning/unlearn_tofu_Llama-3.2-1B-Instruct_forget10_GradDiff_lr1e-05_alpha5_epoch10",
 #     # "GradAscent":"saves/unlearn/GA",
-#     "NPO+ENT":"/users/2/jruan/open-unlearning/saves/unlearn/NPO+ENT1",
-# }
-model_names = {"NPO+ENT+TMP":"/users/2/jruan/open-unlearning/saves/unlearn/NPO+ENT1"}
+    "NPO+ENT":"/users/2/jruan/open-unlearning/saves/unlearn/NPO+ENT1",
+    # "pmc": "/users/2/jruan/pmc-unlearning/unlearning/multirun/2025-11-12/10-34-42/0/checkpoint-750"
+}
+# model_names = {"NPO+ENT+TMP":"/users/2/jruan/open-unlearning/saves/unlearn/NPO+ENT1"}
 # ### Sequential Execution
 # import subprocess
 # import os
@@ -64,20 +68,21 @@ import os
 import time
 
 # List of available GPU IDs you want to use
-available_gpus = [0, 1, 2, 3, 4, 5, 6, 7]  # adjust based on your machine
+available_gpus = [1]  # adjust based on your machine
 
 processes = []
 
 for idx, (method, model_path) in enumerate(model_names.items()):
     gpu_id = available_gpus[idx % len(available_gpus)]  # round-robin allocation
-    log_file = f"{method}_f2.log"
+    log_file = f"{method}-.log"
     
     # Corrected command without nohup and &
     command = (
-        f"CUDA_VISIBLE_DEVICES=0 "
+        f"CUDA_VISIBLE_DEVICES={gpu_id} "
         "python src/eval.py "
         "--config-name=eval.yaml "
         "experiment=eval/tofu/default "
+        # "model=Llama-2-7b-chat-hf "
         "model=Llama-3.2-1B-Instruct "
         f"model.model_args.pretrained_model_name_or_path={model_path} "
         "retain_logs_path=saves/eval/tofu_Llama-3.2-1B-Instruct_retain90/TOFU_EVAL.json "

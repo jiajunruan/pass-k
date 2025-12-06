@@ -3,7 +3,7 @@ model_args:
   attn_implementation: 'flash_attention_2'
   torch_dtype: bfloat16
 tokenizer_args:
-  pretrained_model_name_or_path: meta-llama/Llama-2-7b-chat-hf
+  pretrained_model_name_or_path: /users/2/jruan/.cache/huggingface/hub/models--locuslab--tofu_ft_llama2-7b/snapshots/8fa500e8f345f1dd9cfe95bb4689878c944c9cbd
 template_args: # Used in creating prompts for the dataset. See src/data/utils.py#preprocess_chat_instance.
 # following https://www.reddit.com/r/LocalLLaMA/comments/1561vn5/here_is_a_practical_multiturn_llama2chat_prompt/
   apply_chat_template: False

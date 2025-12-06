@@ -19,4 +19,4 @@ source ~/.bashrc
 conda activate unlearning
 # Run your Python script
 # Make sure 'know.py' is the correct name of your file
-python pass-k.py
+python CS_ES_eval.py

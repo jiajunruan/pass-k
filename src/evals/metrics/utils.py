@@ -407,7 +407,7 @@ def pass_k_per_query(model, tokenizer, batch, generation_args, result_dir):
         return reference_clean in response_clean
 
     scorer = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=True)
-    adaptive_tmp = True
+    adaptive_tmp = False
 #     for n in [1, 2, 4, 8, 16, 32, 64, 128]:
     for n in [200]:
         if adaptive_tmp:

@@ -20,5 +20,5 @@ args:
   do_eval: True
   eval_on_start: True
   eval_strategy: epoch
-  num_train_epochs: 4
+  num_train_epochs: 3
   seed: 0

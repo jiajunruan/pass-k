@@ -14,7 +14,11 @@ temperatures_and_topps = [
     "temperature=0.2top_p=1.0",
     "temperature=0.8top_p=0.2",
     "temperature=0.8top_p=1.0",
-    "temperature=1.0top_p=1.0"
+    "temperature=1.0top_p=1.0",
+    "temperature=0.2top_p=0.8",
+    "temperature=0.8top_p=0.8",
+    "temperature=1.0top_p=0.8",
+    "temperature=1.0top_p=0.2",
 ]
 
 subfolder_config_names = [

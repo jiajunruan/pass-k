@@ -96,7 +96,15 @@ def rouge(model, **kwargs):
         generation_args["output_dir"] = kwargs["output_dir"]
     if kwargs["set"] is not None:
         generation_args["set"] = kwargs["set"]
-
+        
+#     from peft import PeftModel
+#     lora_path = "/users/2/jruan/.cache/huggingface/hub/models--open-unlearning--tofu_Llama-3.2-1B-Instruct_full/snapshots/88e31200b97e4c0c04ae0d2f0b591f427046d192/IHL_FILA_target-all_r-32_0.0001_forget10_2/checkpoint-25"
+#     model = PeftModel.from_pretrained(model, lora_path)
+#     model = model.merge_and_unload()
+#     print("="*50)
+#     print("merge successful")
+#     print("="*50)
+    
     print("generation_args:", generation_args)
     batch_size = 1
     dataloader = DataLoader(data, batch_size=batch_size, collate_fn=collator)

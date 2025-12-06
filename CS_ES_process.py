@@ -18,7 +18,8 @@ def aggregate_metrics_for_subfolder(subfolder_path):
     avg_es_data = {}
 
     # Define the 'i' values
-    generation_indices = [1, 2, 4, 8, 16, 32, 64, 128]
+    # generation_indices = [1,2,4,8,16,32,64,128]
+    generation_indices = [200]
 #     generation_indices
 
     for i in tqdm(generation_indices, desc="Aggregating generation files"):
@@ -27,7 +28,10 @@ def aggregate_metrics_for_subfolder(subfolder_path):
 
         if not os.path.exists(file_path):
             print(f"  Warning: File not found: {file_path}. Skipping.")
-            continue
+            file_path = os.path.join(subfolder_path, "generations_n200.json")
+            if not os.path.exists(file_path):
+                print(f"  Warning: File not found: {file_path}. Skipping.")
+                continue
 
         current_best_cs_values = []
         current_avg_cs_values = []
@@ -37,51 +41,59 @@ def aggregate_metrics_for_subfolder(subfolder_path):
         try:
             with open(file_path, 'r', encoding='utf-8') as f:
                 for line in f:
-                    data = json.loads(line)
-                    # Extract metrics, handling potential None values
-                    if data.get("Best CS") is not None:
-                        current_best_cs_values.append(data["Best CS"])
-                    if data.get("Avg CS") is not None:
-                        current_avg_cs_values.append(data["Avg CS"])
-                    if data.get("Best ES") is not None:
-                        current_best_es_values.append(data["Best ES"])
-                    if data.get("Avg ES") is not None:
-                        current_avg_es_values.append(data["Avg ES"])
+                    try:
+                        data = json.loads(line)
 
-            # Calculate average for the current 'i'
-            # Using .item() to convert numpy scalars to native Python floats for JSON serialization
-            best_cs_data[f"generations_n{i}"] = np.mean(current_best_cs_values).item() if current_best_cs_values else 0.0
-            avg_cs_data[f"generations_n{i}"] = np.mean(current_avg_cs_values).item() if current_avg_cs_values else 0.0
-            best_es_data[f"generations_n{i}"] = np.mean(current_best_es_values).item() if current_best_es_values else 0.0
-            avg_es_data[f"generations_n{i}"] = np.mean(current_avg_es_values).item() if current_avg_es_values else 0.0
-
-        except json.JSONDecodeError as e:
-            print(f"  Error: Malformed JSON in {file_path}. Skipping. Error: {e}")
+                        # Check if data is a list or dictionary
+                        if isinstance(data, list):
+                            for item in data:
+                                if isinstance(item, dict):
+                                    if item.get("Best CS") is not None:
+                                        current_best_cs_values.append(item["Best CS"])
+                                    if item.get("Avg CS") is not None:
+                                        current_avg_cs_values.append(item["Avg CS"])
+                                    if item.get("Best ES") is not None:
+                                        current_best_es_values.append(item["Best ES"])
+                                    if item.get("Avg ES") is not None:
+                                        current_avg_es_values.append(item["Avg ES"])
+                        elif isinstance(data, dict):
+                            if data.get("Best CS") is not None:
+                                current_best_cs_values.append(data["Best CS"])
+                            if data.get("Avg CS") is not None:
+                                current_avg_cs_values.append(data["Avg CS"])
+                            if data.get("Best ES") is not None:
+                                current_best_es_values.append(data["Best ES"])
+                            if data.get("Avg ES") is not None:
+                                current_avg_es_values.append(data["Avg ES"])
+                        else:
+                            print(f"  Warning: Unexpected JSON structure in {file_path}. Skipping.")
+                    except json.JSONDecodeError as e:
+                        print(f"  Error: Malformed JSON in {file_path}. Skipping line. Error: {e}")
         except Exception as e:
             print(f"  An unexpected error occurred processing {file_path}: {e}")
 
-    # Load existing summary and update
-    summary_file_path = os.path.join(subfolder_path, "rougeL_summary.json")
-    summary_data = {}
-    if os.path.exists(summary_file_path):
-        with open(summary_file_path, 'r', encoding='utf-8') as f:
-            try:
-                summary_data = json.load(f)
-            except json.JSONDecodeError:
-                print(f"  Warning: {summary_file_path} is malformed or empty. Overwriting with new data.")
-                summary_data = {}
-    
-    # Add new metrics to the summary data
-    # Using descriptive keys for clarity
-    summary_data["best_cs_avg_per_generation"] = best_cs_data
-    summary_data["avg_cs_avg_per_generation"] = avg_cs_data
-    summary_data["best_es_avg_per_generation"] = best_es_data
-    summary_data["avg_es_avg_per_generation"] = avg_es_data
+        # Calculate average for the current 'i'
+        # Using .item() to convert numpy scalars to native Python floats for JSON serialization
+        best_cs_data[f"generations_n{i}"] = np.mean(current_best_cs_values).item() if current_best_cs_values else 0.0
+        avg_cs_data[f"generations_n{i}"] = np.mean(current_avg_cs_values).item() if current_avg_cs_values else 0.0
+        best_es_data[f"generations_n{i}"] = np.mean(current_best_es_values).item() if current_best_es_values else 0.0
+        avg_es_data[f"generations_n{i}"] = np.mean(current_avg_es_values).item() if current_avg_es_values else 0.0
+        print(current_avg_es_values)
 
-    # Save the updated summary
+    # Define the path for the summary file
+    summary_file_path = os.path.join(subfolder_path, "avg_summary.json")
+
+    summary_data = {}  # Ensure summary_data is a dictionary
+
+    # Prepare the output in the desired format using only best_es_data
+    for i in generation_indices:
+        summary_data[str(i)] = avg_es_data.get(f"generations_n{i}", 0.0)
+        print(avg_es_data.get(f"generations_n{i}", 0.0))
+
+    # Directly overwrite the file with new data
     with open(summary_file_path, 'w', encoding='utf-8') as f:
         json.dump(summary_data, f, indent=2, ensure_ascii=False)
-    print(f"Updated {summary_file_path} with CS and ES averages.")
+    print(f"Overwritten {summary_file_path} with new data in the desired format using only ES best.")
 
 
 def process_all_main_folders(main_folder_paths: list):
@@ -96,12 +108,14 @@ def process_all_main_folders(main_folder_paths: list):
         if not os.path.isdir(root_folder):
             print(f"Error: Main folder '{root_folder}' not found. Skipping.")
             continue
+        
 
         print(f"\nProcessing main folder: {root_folder}")
         
         # Process both 'forget' and 'retain' folders
-        for data_type_folder_name in ["forget", "retain"]:
+        for data_type_folder_name in ["retain"]:
             data_type_path = os.path.join(root_folder, data_type_folder_name)
+            print(f"Entering {data_type_path} directory.")
             
             if not os.path.isdir(data_type_path):
                 print(f"  Warning: '{data_type_folder_name}' folder not found in {root_folder}. Skipping.")
@@ -112,8 +126,16 @@ def process_all_main_folders(main_folder_paths: list):
             # Iterate through the five subfolders within 'forget'/'retain'
             for item in os.listdir(data_type_path):
                 subfolder_path = os.path.join(data_type_path, item)
-                if os.path.isdir(subfolder_path): # Ensure it's actually a directory
-                    aggregate_metrics_for_subfolder(subfolder_path)
+                # Check if the folder name contains the specified temperature and top_p values
+                if any(f"temperature={temp}top_p={top_p}" in item for temp, top_p in [(1.0, 0.8)]):
+                    print(f"Found matching subfolder: {item}")
+                    print(subfolder_path)
+                    if os.path.isdir(subfolder_path):  # Ensure it's actually a directory
+                        print(subfolder_path)
+                        aggregate_metrics_for_subfolder(subfolder_path)
+
+                aggregate_metrics_for_subfolder(subfolder_path)
+                
         
         print(f"Finished processing all relevant folders in {root_folder}.")
         print("-" * 50)
@@ -128,19 +150,21 @@ if __name__ == "__main__":
 
     # Define your list of main_folder paths here
     my_main_folders = [
-        # "/users/2/jruan/pass-k/saves/eval/BLUR-NPO",
-        # "/users/2/jruan/pass-k/saves/eval/GradDiff",
-        # "/users/2/jruan/pass-k/saves/eval/NPO",
-        # "/users/2/jruan/pass-k/saves/eval/NPO+ENT",
-        "/users/2/jruan/pass-k/saves/eval/ada",
+        "/users/2/jruan/pass-k/saves/eval/BLUR-NPO",
+        "/users/2/jruan/pass-k/saves/eval/GradDiff",
+        "/users/2/jruan/pass-k/saves/eval/LoUK",
+#         "/users/2/jruan/pass-k/saves/eval/NPO+ENT",
+        "/users/2/jruan/pass-k/saves/eval/NPO",
+#         "/users/2/jruan/pass-k/saves/eval/ada",
         # "/users/2/jruan/pass-k/saves/eval/beta0.1alpha4gamma1",
         # "/users/2/jruan/pass-k/saves/eval/beta0.1alpha2gamma1"
         # "/users/2/jruan/pass-k/saves/eval/beta1alpha2gamma1ada",
         # "/users/2/jruan/pass-k/saves/eval/beta0.1alpha2gamma1ada",
-        # "/users/2/jruan/pass-k/saves/eval/Original",
+        "/users/2/jruan/pass-k/saves/eval/Original",
         "/users/2/jruan/pass-k/saves/eval/Retrain",
-        # "/users/2/jruan/pass-k/saves/eval/SimNPO",
-        # "/users/2/jruan/pass-k/saves/eval/RMU",
+        "/users/2/jruan/pass-k/saves/eval/SimNPO",
+        "/users/2/jruan/pass-k/saves/eval/RMU",
+#         "/users/2/jruan/pass-k/saves/eval/Original",
         # "/users/2/jruan/pass-k/saves/eval/GradAscent"
         # "/users/2/jruan/pass-k/saves/eval/beta1alpha4gamma1",
         # "/users/2/jruan/pass-k/saves/eval/beta1alpha2gamma1",

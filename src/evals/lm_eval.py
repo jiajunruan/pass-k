@@ -76,12 +76,19 @@ class LMEvalEvaluator(Evaluator):
     def evaluate(self, model, output_dir=None, overwrite=None, **kwargs):
         # set flag to overwrite metrics
         overwrite = self.eval_cfg.overwrite if overwrite is None else overwrite
-
+        from peft import PeftModel
+        lora_path = "/users/2/jruan/.cache/huggingface/hub/models--open-unlearning--tofu_Llama-3.2-1B-Instruct_full/snapshots/88e31200b97e4c0c04ae0d2f0b591f427046d192/IHL_FILA_target-all_r-32_0.0001_forget10_2/checkpoint-25"
+        model = PeftModel.from_pretrained(model, lora_path)
+        model = model.merge_and_unload()
+        print("="*50)
+        print("merge successful")
+        print("="*50)
+        print("temperature:", kwargs.get("temperature"))
+        print("top_p:", kwargs.get("top_p"))
         # Prepare model for evaluation
         kwargs = {"tokenizer": kwargs.get("tokenizer", None)}
         model = self.prepare_model(model, **kwargs)
-        print("temperature:", kwargs.get("temperature"))
-        print("top_p:", kwargs.get("top_p"))
+
 
 
         # Set output_dir and file to store results
