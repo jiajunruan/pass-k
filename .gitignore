@@ -27,13 +27,13 @@ eval_logs/
 eval_dumps/
 # C extensions
 *.so
-saves/
-forget_frontier/
-forget_frontiers_normalized/
-forget_frontiers_normalized_final/
-forget_heatmap/
-forget_heatmap_biased/
-LLMjudgeresult/
+
+forget_frontier*/
+forget_frontiers_normalized*/
+forget_frontiers_normalized_final*/
+forget_heatmap*/
+forget_heatmap_biased*/
+LLMjudgeresult*/
 
 
 # Distribution / packaging
