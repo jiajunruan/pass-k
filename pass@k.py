@@ -3,19 +3,13 @@ import json
 import math
 
 def calculate_pass_at_k(n, c, k):
-    """
-    根据公式计算pass@k的值。
-    n: 总样本数 (这里是320)
-    c: 通过测试的样本数
-    k: 考虑的样本数
-    """
+
     if k > n:
         return 0.0
-    
-    # 组合数 C(n, k)
+
     total_combinations = math.comb(n, k)
     
-    # 组合数 C(n-c, k)
+
     if n - c < k:
         fail_combinations = 0
     else:
@@ -63,13 +57,12 @@ def process_file(input_filename, output_filename):
         with open(output_filename, 'w', encoding='utf-8') as outfile:
             json.dump(average_pass_at_k, outfile, indent=4)
             
-        print(f"写入: {output_filename}")
+  
         
     except Exception as e:
-        print(f"处理 {input_filename} 时出错: {e}")
+        print(f"Error {input_filename}: {e}")
 
 if __name__ == "__main__":
-    # 你的主目录列表
     folder_list = [
         # "LLMjudgeresult/eval/BLUR-NPO/forget",
         # "LLMjudgeresult/eval/NPO/forget",
@@ -80,7 +73,7 @@ if __name__ == "__main__":
         # "LLMjudgeresult/eval/NPO+ENT/forget",
         # "LLMjudgeresult/eval/GradDiff/forget",
         "saves/eval/LoUK/forget"
-        # ... 其他目录 ...
+
     ]
     for main_dir in folder_list:
         for subdir in os.listdir(main_dir):

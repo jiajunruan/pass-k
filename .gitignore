@@ -1,5 +1,6 @@
 # custom .gitignore
 submit.py
+plot_frontier.py
 !src/data/__init__.py
 logs/
 log/
@@ -25,12 +26,16 @@ forget_frontiers_normalized_final*/
 forget_heatmap*/
 forget_heatmap_biased*/
 LLMjudgeresult*/
+TOFU_forget
+TOFU_retain
+plotting*/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
 eval_logs/
 eval_dumps/
+job.sh
 # C extensions
 *.so
 
