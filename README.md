@@ -21,6 +21,7 @@
 ```
 Add your model to the model list in pass-k.py, and run it.
 ```
+Dataset can be chosen in [`configs/data/datasets/TOFU_QA_forget_para.yaml`](configs/data/datasets/TOFU_QA_forget_para.yaml). Change (temperature, top-p) settings in [`src/eval.py`](src/eval.py), number of generations by controling variable `n_list` in [`src/evals/metrics/utils.py`](src/evals/metrics/utils.py) 
 2. ES eval:
 ```
 Update the generation directory in CS_ES_eval.py, and run it.
@@ -29,7 +30,7 @@ Update the generation directory in CS_ES_eval.py, and run it.
 ```
 Update the evaluation direcotory in pass@k.py, and run it, results are in rougeL_summary.json. 
 ```
-
+Note: if you use other dataset, you should change variable `total_entries`.  
 
 
 

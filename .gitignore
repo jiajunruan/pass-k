@@ -36,6 +36,7 @@ __pycache__/
 eval_logs/
 eval_dumps/
 job.sh
+eval.sh
 # C extensions
 *.so
 
