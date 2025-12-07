@@ -19,6 +19,12 @@ data/
 !*/data/ 
 evals/
 !*/evals/  
+forget_frontier*/
+forget_frontiers_normalized*/
+forget_frontiers_normalized_final*/
+forget_heatmap*/
+forget_heatmap_biased*/
+LLMjudgeresult*/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -28,12 +34,7 @@ eval_dumps/
 # C extensions
 *.so
 
-forget_frontier*/
-forget_frontiers_normalized*/
-forget_frontiers_normalized_final*/
-forget_heatmap*/
-forget_heatmap_biased*/
-LLMjudgeresult*/
+
 
 
 # Distribution / packaging
