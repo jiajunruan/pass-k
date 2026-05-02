@@ -65,14 +65,27 @@ def process_file(input_filename, output_filename):
 if __name__ == "__main__":
     folder_list = [
         # "LLMjudgeresult/eval/BLUR-NPO/forget",
-        # "LLMjudgeresult/eval/NPO/forget",
+#         "saves/eval/NPO_fix/forget",
         # "LLMjudgeresult/eval/Original/forget",
         # "LLMjudgeresult/eval/Retrain/forget",
-        # "LLMjudgeresult/eval/RMU/forget",
-        # "LLMjudgeresult/eval/SimNPO/forget",
+#         "saves/eval/RMU-0_fix/forget",
+#         "saves/eval/RMU-1_fix/forget",
+#         "saves/eval/RMU-2_fix/forget",
+#         "saves/eval/RMU-3_fix/forget",
+#         "saves/eval/SimNPO-0_fix/forget",
+#         "saves/eval/SimNPO-1_fix/forget",
+#         "saves/eval/SimNPO-2_fix/forget",
+#         "saves/eval/SimNPO-3_fix/forget",
         # "LLMjudgeresult/eval/NPO+ENT/forget",
-        # "LLMjudgeresult/eval/GradDiff/forget",
-        "saves/eval/LoUK/forget"
+#         "saves/eval/GradDiff-0_fix/forget",
+#         "saves/eval/GradDiff-1_fix/forget",
+#         "saves/eval/GradDiff-2_fix/forget",
+#         "saves/eval/GradDiff-3_fix/forget",
+#         "saves/eval/NPO_verb_fix/forget",
+        "saves/eval/NPO-0_fix/forget",
+        "saves/eval/NPO-1_fix/forget",
+        "saves/eval/NPO-2_fix/forget",
+        # "saves/eval/NPO_1/forget"
 
     ]
     for main_dir in folder_list:

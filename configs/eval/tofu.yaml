@@ -11,14 +11,14 @@ defaults: # include all defined metrics files
     # - privleak
     # - extraction_strength
     # - exact_memorization
-    # - mia_min_k_plus_plus
+    - mia_min_k_plus_plus
     # - mia_min_k
-    # - mia_loss
+#     - mia_loss
     # - mia_zlib
     # - mia_gradnorm
     # - mia_reference # set reference model path appropriately
     # - forget_Q_A_gibberish
-    # - retain_Q_A_ROUGE
+#     - retain_Q_A_ROUGE
     # - wf_Q_A_Prob_normalised
 
 handler: TOFUEvaluator

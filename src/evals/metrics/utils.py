@@ -384,6 +384,13 @@ def generate_with_adaptive_temperature(
     return generated_ids
 
 def pass_k_per_query(model, tokenizer, batch, generation_args, result_dir):
+#     seed = generation_args.get("seed", 42)
+#     torch.manual_seed(seed)
+#     if torch.cuda.is_available():
+#         torch.cuda.manual_seed_all(seed)
+#     print("*"*50)
+#     print(" I have seed ")
+#     print("seed:",seed)
     batch = {k: v.to(model.device) for k, v in batch.items()}
     input_ids = batch["input_ids"]
     labels = batch["labels"]

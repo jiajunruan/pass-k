@@ -13,7 +13,17 @@ model_names = {
     # "Retrain":"open-unlearning/tofu_Llama-3.2-1B-Instruct_retain90",
     # "GradDiff":"open-unlearning/unlearn_tofu_Llama-3.2-1B-Instruct_forget10_GradDiff_lr1e-05_alpha5_epoch10",
 #     # "GradAscent":"saves/unlearn/GA",
-    "NPO+ENT":"/users/2/jruan/open-unlearning/saves/unlearn/NPO+ENT1",
+#     "NPO+ENT":"/users/2/jruan/open-unlearning/saves/unlearn/NPO+ENT1",
+    
+    
+    "NPO-2":"/users/2/jruan/open-unlearning/saves/unlearn/NPO_fix/checkpoint-2",
+#     "SimNPO-2":"/users/2/jruan/open-unlearning/saves/unlearn/SimNPO_fix/checkpoint-2",
+#     "RMU-2": "/users/2/jruan/open-unlearning/saves/unlearn/RMU_fix/checkpoint-2",
+#     "GradDiff-2": "/users/2/jruan/open-unlearning/saves/unlearn/GradDiff_fix/checkpoint-2"
+    
+    
+    # "NPO_verb": "/users/2/jruan/open-unlearning/saves/unlearn/SAMPLE_UNLEARN",
+#     "NPO_1": "/users/2/jruan/open-unlearning/saves/unlearn/NPO1",
     # "pmc": "/users/2/jruan/pmc-unlearning/unlearning/multirun/2025-11-12/10-34-42/0/checkpoint-750"
 }
 # model_names = {"NPO+ENT+TMP":"/users/2/jruan/open-unlearning/saves/unlearn/NPO+ENT1"}
@@ -68,13 +78,13 @@ import os
 import time
 
 # List of available GPU IDs you want to use
-available_gpus = [1]  # adjust based on your machine
+available_gpus = [0,1,2,3]  # adjust based on your machine
 
 processes = []
 
 for idx, (method, model_path) in enumerate(model_names.items()):
     gpu_id = available_gpus[idx % len(available_gpus)]  # round-robin allocation
-    log_file = f"{method}-.log"
+    log_file = f"{method}.log"
     
     # Corrected command without nohup and &
     command = (
@@ -86,7 +96,7 @@ for idx, (method, model_path) in enumerate(model_names.items()):
         "model=Llama-3.2-1B-Instruct "
         f"model.model_args.pretrained_model_name_or_path={model_path} "
         "retain_logs_path=saves/eval/tofu_Llama-3.2-1B-Instruct_retain90/TOFU_EVAL.json "
-        f"task_name={method} "
+        f"task_name={method}_fix "
         f"> {log_file} 2>&1"
     )
 

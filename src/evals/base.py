@@ -56,6 +56,8 @@ class Evaluator:
         for metric_name, metric_results in logs.items():
             if metric_name not in self.metrics:
                 continue
+            if metric_results is None:
+                continue
             agg_value = metric_results.get("agg_value", None)
             if agg_value is not None:
                 metric_summary[metric_name] = agg_value
@@ -107,7 +109,7 @@ class Evaluator:
                 "set": dataset
             }
             metrics_args = self.eval_cfg.metrics[metric_name]
-            _
+            
             result = metric_fn(
                 model,
                 metric_name=metric_name,
@@ -115,9 +117,10 @@ class Evaluator:
                 **kwargs,
                 **metrics_args,
             )
-            # if "agg_value" in result:
-            #     logger.info(f"Result for metric {metric_name}:\t{result['agg_value']}")
-            # self.save_logs(logs, logs_file_path)
-            # self.save_logs(self.summarize(logs), summary_file_path)
+            if metric_name != "forget_Q_A_ROUGE":
+                if "agg_value" in result:
+                    logger.info(f"Result for metric {metric_name}:\t{result['agg_value']}")
+                self.save_logs(logs, logs_file_path)
+                self.save_logs(self.summarize(logs), summary_file_path)
 
         # return self.summarize(logs)
