@@ -21,9 +21,13 @@ MODELS = {
     #     "eval_dir": "/users/2/jruan/pass-k/saves/eval/RULE_NPO"
     # },
     "Minmax": {
-        "model_path": "/users/2/jruan/Probe_unlearning/output",
+        "model_path": "Jiajunruan/Minmax-TOFU-2",
         "eval_dir": "/users/2/jruan/pass-k/saves/eval/Minmax"
     },
+#     "RMU": {
+#         "model_path": "open-unlearning/unlearn_tofu_Llama-3.2-1B-Instruct_forget10_RMU_lr2e-05_layer10_scoeff100_epoch5",
+#         "eval_dir": "/users/2/jruan/pass-k/saves/eval/RMU"
+#     },
     # "NPO": {
     #     "model_path": "open-unlearning/unlearn_tofu_Llama-3.2-1B-Instruct_forget10_NPO_lr5e-05_beta0.5_alpha1_epoch10",
     #     "eval_dir": "/users/2/jruan/pass-k/saves/eval/NPO"
@@ -363,7 +367,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
 
-    if not args.skip_gen: run_generation_phase(gpu_id=args.gpu_id)
+#     if not args.skip_gen: run_generation_phase(gpu_id=args.gpu_id)
     if not args.skip_eval: run_semantic_eval_phase(gpu_id=args.gpu_id)
     if not args.skip_agg: run_aggregation_phase()
 

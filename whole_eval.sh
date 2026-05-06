@@ -4,9 +4,9 @@
 #SBATCH --mem=64gb
 #SBATCH --output=log/%j.out                              
 #SBATCH --error=log/%j.out
-#SBATCH --job-name=test
+#SBATCH --job-name=RMU_eval
 #SBATCH --requeue
-#SBATCH --gres=gpu:a100:1
+#SBATCH --gres=gpu:h100:1
 #SBATCH --partition=mhong
 
 
